@@ -86,9 +86,51 @@ ci_50
 
 **Prompt:**  Calculate  the difference between the income of treated and control commuters in our sample. We need to subtract the Control average from the Treated average. To do that, having them on the same row is convenient. Recall the `pivot_*` functions. `everything()` is also a cool trick for organizing the order of the variables in a tibble. I like to put the key variable, which would be the income difference in this case, first.
 
+```{r}
+
+diff_train <- train %>%
+  group_by(treatment) %>%
+  summarise(avg_inc = mean(income)) %>%
+  pivot_wider(id_cols = treatment:avg_inc, names_from = treatment, values_from = avg_inc) %>% 
+  mutate(Difference = Control - Treated) %>%
+  select(Difference, everything())
+
+diff_train
+
+
+find_diff <- function(data){
+  data %>%
+    group_by(treatment) %>%
+    summarise(avg_inc = mean(income)) %>%
+    pivot_wider(id_cols = treatment:avg_inc, names_from = treatment, values_from = avg_inc) %>% 
+    mutate(Difference = Control - Treated) %>%
+    select(Difference, everything()) %>%
+    pull(Difference)
+}
+
+```
+
+
 # Scene 7
 
 **Prompt:**  Calculate a 95% confidence interval for the difference between the mean income of treated and control commuters in our sample. Provide a Bayesian and Frequentist interpretation of this interval.
+
+```{r}
+# Create bootstrap distributions 
+
+virtual_train_resamples <- tibble(replicate_id = 1:1000, 
+                            sample = map(1:1000,
+                                         ~ rep_sample_n(train, 
+                                                        size = 115, 
+                                                        replace = TRUE, 
+                                                        reps = 1))
+)
+
+find_diff(virtual_train_resamples[[2]][[1]])
+
+
+```
+
 
 
 # Scene 8
